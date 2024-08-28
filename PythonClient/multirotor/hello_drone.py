@@ -8,7 +8,9 @@ import pprint
 import cv2
 
 # connect to the AirSim simulator
+print("connecting:")
 client = airsim.MultirotorClient()
+print("confirm:")
 client.confirmConnection()
 client.enableApiControl(True)
 
