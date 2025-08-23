@@ -14,8 +14,8 @@ docker_version=$(docker -v | cut -d ' ' -f3 | sed 's/,$//')
 
 if version_less_than_equal_to $REQ_DOCKER_VERSION $docker_version; then
     # Use the normal docker command
-    DOCKER_CMD="docker run --gpus all"
-    #DOCKER_CMD="docker run"
+    #DOCKER_CMD="docker run --gpus all"
+    DOCKER_CMD="docker run"
 else
     # Use nvidia-docker
     DOCKER_CMD="nvidia-docker run --runtime=nvidia"
@@ -59,28 +59,35 @@ for param in $@; do
     esac
 done
 
+# docker run --gpus all    -e NVIDIA_DISABLE_REQUIRE=1    -e NVIDIA_DRIVER_CAPABILITIES=all --device /dev/dri    -v /etc/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json    -v /etc/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json    -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json    -it airsim_binary:10.0-devel-ubuntu20.04     bash
+
 # set the environment varible SDL_VIDEODRIVER to SDL_VIDEODRIVER_VALUE
 # and tell the docker container to execute UNREAL_BINARY_COMMAND
-#$DOCKER_CMD --gpus='all,"capabilities=compute,utility,graphics,display"' -it \
-$DOCKER_CMD -it \
-    -v $(pwd)/settings.json:/home/airsim_user/Documents/AirSim/settings.json \
-    -e NVIDIA_DISABLE_REQUIRE=1    -e NVIDIA_DRIVER_CAPABILITIES=all --device /dev/dri    -v /etc/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json    -v /etc/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json    -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json -v /usr/share/vulkan/icd.d:/usr/share/vulkan/icd.d \
+#$DOCKER_CMD -it \
+$DOCKER_CMD --gpus='all,"capabilities=compute,utility,graphics,display"' -it \
+    -v $(pwd)/settings.json:/home/ivcha/development/AirSim/settings.json \
+    -e NVIDIA_DISABLE_REQUIRE=1    -e NVIDIA_DRIVER_CAPABILITIES=all --device /dev/dri \
+-v /etc/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
+-v /etc/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
+-v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+-v /usr/share/vulkan/icd.d:/usr/share/vulkan/icd.d \
     -v /usr/share/vulkan/icd.d:/usr/share/vulkan/icd.d \
     -v $UNREAL_BINARY_PATH:$UNREAL_BINARY_PATH \
     -e SDL_VIDEODRIVER=$SDL_VIDEODRIVER_VALUE \
     -e SDL_HINT_CUDA_DEVICE='0' \
+    --net=host \
+    --env="DISPLAY=$DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    -env="XAUTHORITY=$XAUTH" \
+    --volume="$XAUTH:$XAUTH" \
+    --rm \
     -p 41451:41451 \
     $DOCKER_IMAGE_NAME \
+    #/bin/bash -c vulkaninfo
     /bin/bash -c "$UNREAL_BINARY_COMMAND"
     #bash
     #--privileged \
-    #--net=host \
-    #--env="DISPLAY=$DISPLAY" \
-    #--env="QT_X11_NO_MITSHM=1" \
-    #-env="XAUTHORITY=$XAUTH" \
-    #--volume="$XAUTH:$XAUTH" \
-    #--rm \
     #$DOCKER_IMAGE_NAME \
     #bash
     #/bin/bash -c "$UNREAL_BINARY_COMMAND -vulkan"
